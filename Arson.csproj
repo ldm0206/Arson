@@ -10,8 +10,15 @@
     <RootNamespace>Arson</RootNamespace>
     <AssemblyName>Arson</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <LangVersion>7.3</LangVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup>
+    <!-- Location of the Cities: Skylines game assemblies; override with /p:CitiesSkylinesManagedPath=... -->
+    <CitiesSkylinesManagedPath Condition="'$(CitiesSkylinesManagedPath)' == '' And Exists('$(MSBuildProjectDirectory)\Managed\Assembly-CSharp.dll')">$(MSBuildProjectDirectory)\Managed</CitiesSkylinesManagedPath>
+    <CitiesSkylinesManagedPath Condition="'$(CitiesSkylinesManagedPath)' == ''">$(MSBuildProgramFiles32)\Steam\steamapps\common\Cities_Skylines\Cities_Data\Managed</CitiesSkylinesManagedPath>
+    <SkipDeploy Condition="'$(SkipDeploy)' == ''">false</SkipDeploy>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -32,7 +39,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
-      <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Cities_Skylines\Cities_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <HintPath>$(CitiesSkylinesManagedPath)\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="CitiesHarmony.API, Version=2.2.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\CitiesHarmony.API.2.2.0\lib\net35\CitiesHarmony.API.dll</HintPath>
@@ -41,10 +48,10 @@
       <HintPath>packages\CitiesHarmony.Harmony.2.2.2\lib\net35\CitiesHarmony.Harmony.dll</HintPath>
     </Reference>
     <Reference Include="ColossalManaged">
-      <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Cities_Skylines\Cities_Data\Managed\ColossalManaged.dll</HintPath>
+      <HintPath>$(CitiesSkylinesManagedPath)\ColossalManaged.dll</HintPath>
     </Reference>
     <Reference Include="ICities">
-      <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Cities_Skylines\Cities_Data\Managed\ICities.dll</HintPath>
+      <HintPath>$(CitiesSkylinesManagedPath)\ICities.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -56,7 +63,7 @@
       <HintPath>packages\UnifiedUILib.2.2.12\lib\net35\UnifiedUILib.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine">
-      <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Cities_Skylines\Cities_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>$(CitiesSkylinesManagedPath)\UnityEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -80,6 +87,7 @@
     <None Include="Translations\en.csv" />
     <None Include="Translations\ja.csv" />
     <None Include="Translations\ru.csv" />
+    <None Include="Translations\zh.csv" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Images\PreviewImage.png" />
@@ -87,8 +95,10 @@
     <Content Include="Resources\ArsonUUI.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- .NET 3.5 reference assemblies (used when the installed .NET 3.5 targeting pack is missing, e.g. in CI). -->
+  <Import Project="packages\Microsoft.NETFramework.ReferenceAssemblies.net35.1.0.3\build\Microsoft.NETFramework.ReferenceAssemblies.net35.targets" Condition="Exists('packages\Microsoft.NETFramework.ReferenceAssemblies.net35.1.0.3\build\Microsoft.NETFramework.ReferenceAssemblies.net35.targets')" />
   <PropertyGroup>
-    <PostBuildEvent>mkdir "%25LOCALAPPDATA%25\Colossal Order\Cities_Skylines\Addons\Mods\$(ProjectName)"
+    <PostBuildEvent Condition="'$(SkipDeploy)' != 'true'">mkdir "%25LOCALAPPDATA%25\Colossal Order\Cities_Skylines\Addons\Mods\$(ProjectName)"
 del "%25LOCALAPPDATA%25\Colossal Order\Cities_Skylines\Addons\Mods\$(ProjectName)\*.dll"
 
 xcopy /y "$(TargetPath)" "%25LOCALAPPDATA%25\Colossal Order\Cities_Skylines\Addons\Mods\$(ProjectName)"
