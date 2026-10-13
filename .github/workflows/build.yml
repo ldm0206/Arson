@@ -1,10 +1,10 @@
 name: Build
 
-# 每次推送/PR 编译验证；打 v* 标签时额外发布 Release 压缩包。
+# 每次推送到 master 自动编译、打包并发布 Release；
+# PR 只编译验证，不发布。
 on:
   push:
     branches: [ master ]
-    tags: [ 'v*' ]
   pull_request:
     branches: [ master ]
   workflow_dispatch:
@@ -48,6 +48,14 @@ jobs:
 
           Compress-Archive -Path $out -DestinationPath "package/Arson.zip" -Force
 
+      - name: 读取模组版本号
+        id: mod_version
+        shell: pwsh
+        run: |
+          $version = (Select-String -Path Code/Mod.cs -Pattern 'Version => "([^"]+)"').Matches[0].Groups[1].Value
+          if (-not $version) { $version = "0.0" }
+          "version=$version" >> $env:GITHUB_OUTPUT
+
       - name: 上传构建产物
         uses: actions/upload-artifact@v7
         with:
@@ -55,8 +63,10 @@ jobs:
           path: package/Arson.zip
 
       - name: 发布 Release
-        if: startsWith(github.ref, 'refs/tags/')
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: softprops/action-gh-release@v3
         with:
+          tag_name: v${{ steps.mod_version.outputs.version }}-${{ github.run_number }}
+          name: Arson ${{ steps.mod_version.outputs.version }} (build ${{ github.run_number }})
           files: package/Arson.zip
           generate_release_notes: true
