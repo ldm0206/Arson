@@ -105,6 +105,28 @@ namespace Arson
         /// </summary>
         public override void SimulationStep()
         {
+            UpdateHoverInstance();
+        }
+
+
+        /// <summary>
+        /// Called by the game every frame while this tool is active.
+        /// Tracks box-selection drag input.
+        /// </summary>
+        protected override void OnToolUpdate()
+        {
+            base.OnToolUpdate();
+
+            // Input is tracked here (not in SimulationStep) so that dragging also works when the simulation isn't advancing (e.g. while the game is paused) and at any rendering frame rate.
+            UpdateSelectionDrag();
+        }
+
+
+        /// <summary>
+        /// Performs raycasting to determine the currently hovered instance.
+        /// </summary>
+        private void UpdateHoverInstance()
+        {
             // Get base mouse ray.
             Ray mouseRay = m_mouseRay;
 
@@ -179,9 +201,6 @@ namespace Arson
             // Set mouse position and record errors.
             m_mousePosition = output.m_hitPos;
             m_selectErrors = errors;
-
-            // Update the box selection drag.
-            UpdateSelectionDrag();
         }
 
 
@@ -332,6 +351,8 @@ namespace Arson
             Vector2 drag = _selectionEnd - _selectionStart;
             if (Mathf.Max(Mathf.Abs(drag.x), Mathf.Abs(drag.y)) < ClickThreshold)
             {
+                // Refresh the hover instance - the simulation-driven hover update may be stale (e.g. while paused).
+                UpdateHoverInstance();
                 HandleClick();
                 return;
             }
